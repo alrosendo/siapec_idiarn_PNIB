@@ -22,6 +22,15 @@ def migrate_sqlite_columns(db: Session) -> None:
             db.execute(text("ALTER TABLE produtores ADD COLUMN telefone VARCHAR(30)"))
         if cols and "email" not in cols:
             db.execute(text("ALTER TABLE produtores ADD COLUMN email VARCHAR(120)"))
+        gta_cols = {r[1] for r in db.execute(text("PRAGMA table_info(gtas)")).fetchall()}
+        if gta_cols and "exploracao_destino_id" not in gta_cols:
+            db.execute(text("ALTER TABLE gtas ADD COLUMN exploracao_destino_id INTEGER"))
+        if gta_cols and "quantidades_json" not in gta_cols:
+            db.execute(text("ALTER TABLE gtas ADD COLUMN quantidades_json TEXT"))
+        if gta_cols and "ocorrencia" not in gta_cols:
+            db.execute(text("ALTER TABLE gtas ADD COLUMN ocorrencia TEXT"))
+        if gta_cols and "data_chegada" not in gta_cols:
+            db.execute(text("ALTER TABLE gtas ADD COLUMN data_chegada DATE"))
         db.commit()
     except Exception:
         db.rollback()
@@ -32,6 +41,8 @@ def seed_if_empty(db: Session) -> None:
 
     if db.scalar(select(Produtor).limit(1)):
         _ensure_demo_vinculos(db)
+        _ensure_destino_demo(db)
+        _ensure_bubalinos(db)
         return
 
     dono = Produtor(
@@ -127,8 +138,10 @@ def seed_if_empty(db: Session) -> None:
             telefone="84988887777",
         )
     )
-
+    db.flush()
+    _criar_destino_se_ausente(db)
     db.commit()
+    _ensure_bubalinos(db)
 
 
 def _ensure_demo_vinculos(db: Session) -> None:
@@ -189,6 +202,73 @@ def _ensure_demo_vinculos(db: Session) -> None:
             )
         )
     db.commit()
+    _ensure_destino_demo(db)
+
+
+def _ensure_destino_demo(db: Session) -> None:
+    if db.scalar(select(Propriedade).where(Propriedade.codigo == "PROP-RN-002")):
+        return
+    _criar_destino_se_ausente(db)
+    db.commit()
+
+
+def _criar_destino_se_ausente(db: Session) -> None:
+    if db.scalar(select(Propriedade).where(Propriedade.codigo == "PROP-RN-002")):
+        return
+    titular = db.scalar(select(Produtor).where(Produtor.cpf_cnpj == "98765432100"))
+    if not titular:
+        titular = db.scalar(select(Produtor).limit(1))
+    if not titular:
+        return
+    prop = Propriedade(
+        produtor_id=titular.id,
+        codigo="PROP-RN-002",
+        nome="Fazenda Destino Demo",
+        municipio="Mossoró",
+        uf="RN",
+    )
+    db.add(prop)
+    db.flush()
+    db.add(
+        VinculoPropriedade(
+            propriedade_id=prop.id,
+            produtor_id=titular.id,
+            tipo_vinculo="proprietario",
+            ativo=True,
+            data_inicio=date.today(),
+            observacao="Destino demo para confirmação de GTA",
+        )
+    )
+    db.add(Exploracao(propriedade_id=prop.id, especie="bovino", finalidade="corte"))
+
+
+def _ensure_bubalinos(db: Session) -> None:
+    """Garante exploração de búfalos na origem e no destino demo."""
+    pares = (
+        ("PROP-RN-001", [("M", "0-12", 12), ("M", "13-24", 8), ("F", "0-12", 15), ("F", "13-24", 10), ("F", "25-36", 6), ("F", "36+", 4)]),
+        ("PROP-RN-002", []),
+    )
+    mudou = False
+    for codigo, celulas in pares:
+        prop = db.scalar(select(Propriedade).where(Propriedade.codigo == codigo))
+        if not prop:
+            continue
+        exp = db.scalar(
+            select(Exploracao).where(
+                Exploracao.propriedade_id == prop.id,
+                Exploracao.especie == "bubalino",
+            )
+        )
+        if exp:
+            continue
+        exp = Exploracao(propriedade_id=prop.id, especie="bubalino", finalidade="corte")
+        db.add(exp)
+        db.flush()
+        for sexo, faixa, qtd in celulas:
+            db.add(SaldoFaixa(exploracao_id=exp.id, sexo=sexo, faixa=faixa, quantidade=qtd))
+        mudou = True
+    if mudou:
+        db.commit()
 
 
 def data_nasc_faixa(faixa: str) -> date:

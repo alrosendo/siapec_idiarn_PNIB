@@ -8,6 +8,7 @@ from app.schemas.dto import (
     AplicarIdentificacaoIn,
     AplicarIdentificacaoOut,
     DeclaracaoOut,
+    ChegadaCreate,
     GTACreate,
     GTAOut,
     HomologarIn,
@@ -246,8 +247,16 @@ def criar_gta(payload: GTACreate, db: Session = Depends(get_db)):
 
 
 @router.get("/gtas", response_model=list[GTAOut])
-def gtas(db: Session = Depends(get_db)):
-    return gta_service.listar_gtas(db)
+def gtas(status: str | None = Query(default=None), db: Session = Depends(get_db)):
+    return gta_service.listar_gtas(db, status=status)
+
+
+@router.post("/gtas/{gta_id}/chegada", response_model=GTAOut)
+def confirmar_chegada(gta_id: int, payload: ChegadaCreate, db: Session = Depends(get_db)):
+    try:
+        return gta_service.confirmar_chegada(db, gta_id, payload)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
 
 
 @router.post("/vacinacoes/brucelose", response_model=VacinacaoOut)

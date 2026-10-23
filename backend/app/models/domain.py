@@ -164,12 +164,19 @@ class GTA(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     numero: Mapped[str] = mapped_column(String(40), unique=True, index=True)
     exploracao_origem_id: Mapped[int] = mapped_column(ForeignKey("exploracoes.id"))
+    exploracao_destino_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("exploracoes.id"), nullable=True
+    )
     destino_codigo: Mapped[str] = mapped_column(String(40))
     destino_nome: Mapped[str] = mapped_column(String(200))
     finalidade: Mapped[str] = mapped_column(String(80))
     status: Mapped[str] = mapped_column(String(20), default="emitida")
+    # emitida | recebida | divergente
     total_cabecas: Mapped[int] = mapped_column(Integer, default=0)
     exige_ids: Mapped[bool] = mapped_column(Boolean, default=False)
+    quantidades_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ocorrencia: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    data_chegada: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     animais: Mapped[list[GTAAnimal]] = relationship(back_populates="gta")

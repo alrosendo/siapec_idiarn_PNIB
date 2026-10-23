@@ -65,7 +65,9 @@ export const api = {
   aplicarIds: (body) =>
     request("/identificacao/aplicar", { method: "POST", body: JSON.stringify(body) }),
   emitirGta: (body) => request("/gtas", { method: "POST", body: JSON.stringify(body) }),
-  gtas: () => request("/gtas"),
+  gtas: (status) => request(status ? `/gtas?status=${status}` : "/gtas"),
+  confirmarChegada: (id, body) =>
+    request(`/gtas/${id}/chegada`, { method: "POST", body: JSON.stringify(body) }),
   vacinar: (body) =>
     request("/vacinacoes/brucelose", { method: "POST", body: JSON.stringify(body) }),
 };

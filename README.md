@@ -41,7 +41,7 @@ npm run dev
 3. Nascimento / morte (índice de parição e mortalidade)  
 4. Fila OESA para mortalidade acima do índice  
 5. Wizard Identificar agora  
-6. Emissão de GTA (com passo de IDs)  
+6. Emissão de GTA e confirmação de chegada (com ocorrência se divergir)  
 7. Vacinação brucelose com vínculo de IDs  
 
 Ver `docs/` para especificação de telas.
@@ -54,7 +54,7 @@ Ver `docs/` para especificação de telas.
 | `/cadastros` | Produtores, propriedades, vínculos, RTs |
 | `/exploracao` | Saldo + nascimento + morte + histórico |
 | `/identificar` | Aplicar IDs do estoque |
-| `/transito` | Emitir GTA |
+| `/transito` | Emitir GTA e confirmar chegada |
 | `/vacina` | Brucelose com IDs |
 | `/oesa` | Homologar/estornar mortalidade |
 

@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { api } from "../api/client";
 
 const fila = ref([]);
+const divergencias = ref([]);
 const erro = ref("");
 const msg = ref("");
 const loading = ref(false);
@@ -11,6 +12,7 @@ async function carregar() {
   erro.value = "";
   try {
     fila.value = await api.filaMortalidade();
+    divergencias.value = await api.gtas("divergente");
   } catch (e) {
     erro.value = e.message;
   }
@@ -86,6 +88,30 @@ onMounted(carregar);
       </table>
 
       <button class="btn secondary" style="margin-top: 1rem" @click="carregar">Atualizar</button>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin-top: 0">Ocorrências de GTA</h3>
+      <p class="muted">Chegadas conferidas com quantidade ou ID diferente do embarque.</p>
+      <p v-if="!divergencias.length" class="muted">Nenhuma divergência.</p>
+      <table v-else>
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Destino</th>
+            <th>Data chegada</th>
+            <th>Ocorrência</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="g in divergencias" :key="g.id">
+            <td>{{ g.numero }}</td>
+            <td>{{ g.destino_nome }}</td>
+            <td>{{ g.data_chegada || "—" }}</td>
+            <td>{{ g.ocorrencia }}</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
   </div>
 </template>

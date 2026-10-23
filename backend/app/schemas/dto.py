@@ -189,8 +189,7 @@ class GTAQuantidadeIn(BaseModel):
 
 class GTACreate(BaseModel):
     exploracao_origem_id: int
-    destino_codigo: str
-    destino_nome: str
+    exploracao_destino_id: int
     finalidade: str
     quantidades: list[GTAQuantidadeIn]
     ids_oficiais: list[str] = []
@@ -200,16 +199,27 @@ class GTACreate(BaseModel):
 class GTAOut(BaseModel):
     id: int
     numero: str
+    exploracao_origem_id: int
+    exploracao_destino_id: Optional[int] = None
     destino_codigo: str
     destino_nome: str
     finalidade: str
     status: str
     total_cabecas: int
     exige_ids: bool
+    quantidades: list[GTAQuantidadeIn] = []
     ids_vinculados: list[str]
+    ocorrencia: Optional[str] = None
+    data_chegada: Optional[date] = None
     criado_em: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ChegadaCreate(BaseModel):
+    quantidades: list[GTAQuantidadeIn]
+    ids_oficiais: list[str] = []
+    observacao: Optional[str] = None
 
 
 class VacinacaoCreate(BaseModel):
